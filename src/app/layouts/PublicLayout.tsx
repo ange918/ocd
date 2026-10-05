@@ -53,7 +53,7 @@ function Header() {
           {NAV.map((n) => (
             <a
               key={n.id}
-              href={`/#${n.id}`}
+              href={`${import.meta.env.BASE_URL}#${n.id}`}
               onClick={(e) => {
                 e.preventDefault()
                 goTo(n.id)
@@ -97,7 +97,7 @@ function Header() {
               {NAV.map((n) => (
                 <m.li key={n.id} variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
                   <a
-                    href={`/#${n.id}`}
+                    href={`${import.meta.env.BASE_URL}#${n.id}`}
                     onClick={(e) => {
                       e.preventDefault()
                       setOpen(false)
@@ -147,7 +147,7 @@ function Footer() {
               </Link>
             </li>
             <li>
-              <a className="hover:text-ocd-soft" href="/#comment">
+              <a className="hover:text-ocd-soft" href={`${import.meta.env.BASE_URL}#comment`}>
                 Comment ça marche
               </a>
             </li>

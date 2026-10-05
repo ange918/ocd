@@ -48,7 +48,7 @@ export function ApplicationsTable({ items }: { items: Application[] }) {
                   <Avatar person={a.applicant} size="sm" />
                   <div>
                     <a
-                      href={`/admin/projets/${a.id}`}
+                      href={`${import.meta.env.BASE_URL}admin/projets/${a.id}`}
                       onClick={(e) => {
                         e.preventDefault()
                         navigate(`/admin/projets/${a.id}`)
