@@ -53,3 +53,12 @@ export const TESTIMONIALS = [
 ]
 
 export const JOINED_AVATARS = [IMG.avatarJoin1, IMG.avatarJoin2, IMG.avatarJoin3].map((id) => unsplash(id, 96, 96, true))
+
+export const FAQ_ITEMS = [
+  { q: "Est-ce que c'est payant ?", a: "Non. Soumettre ton projet à OCD est gratuit. Aucun frais de dossier ne te sera jamais demandé pour candidater." },
+  { q: 'Qui peut candidater ?', a: "Toute personne qui porte un projet entrepreneurial en Afrique de l'Ouest — commerce, artisanat, tech, mode, services, art & culture — de l'idée au projet déjà lancé." },
+  { q: 'Dans quels pays OCD est-il présent ?', a: "OCD accompagne surtout le Bénin, le Togo, la Côte d'Ivoire, le Sénégal et leurs voisins. Si ton pays n'est pas listé, candidate quand même : on étudie chaque dossier." },
+  { q: 'Comment suis-je informé(e) de l\'avancement ?', a: "Tu suis le statut de ton dossier dans ton espace personnel et tu reçois des notifications WhatsApp à chaque étape. Premier retour en général sous 48h*." },
+  { q: "Quels types d'accompagnement sont proposés ?", a: "Visibilité, mentoring, équipement ou orientation vers du financement — selon le besoin principal que tu indiques dans ta candidature." },
+  { q: 'Mes données sont-elles protégées ?', a: "Tes informations ne servent qu'à étudier ton projet et à te contacter. Elles ne sont jamais revendues. * Contenu d'exemple pour maquette." },
+]

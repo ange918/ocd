@@ -1,7 +1,7 @@
 import { m } from 'framer-motion'
 import { ButtonLink, Img } from '@/components/ui'
 import { IMG, unsplash } from '@/data/images'
-import { JOINED_AVATARS } from '@/data/landing'
+import { JOINED_AVATARS, LANDING_STATS } from '@/data/landing'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 
 export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLabel: string }) {
@@ -9,6 +9,11 @@ export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLa
     <section className="relative overflow-hidden" aria-labelledby="hero-title">
       <div aria-hidden className="pointer-events-none absolute -top-10 left-1/2 h-64 w-64 -translate-x-1/2 grad-orb opacity-90 md:-top-32 md:h-[520px] md:w-[720px] md:opacity-80" />
       <div aria-hidden className="pointer-events-none absolute right-0 bottom-0 hidden h-64 w-64 rounded-full bg-ocd-green/10 blur-3xl md:block" />
+      <svg aria-hidden viewBox="0 0 188 64" className="pointer-events-none absolute top-1/2 -left-10 hidden w-[620px] -translate-y-1/2 opacity-[0.05] md:block" fill="none" stroke="#F7931E" strokeWidth="14">
+        <circle cx="30" cy="32" r="24" />
+        <path d="M42 22 C52 8, 66 8, 76 22 M42 42 C52 56, 66 56, 76 42" strokeLinecap="round" />
+        <path d="M90 14.5 A24 24 0 1 0 90 49.5" strokeLinecap="round" />
+      </svg>
       <div className="mx-auto grid max-w-6xl gap-8 px-5 pt-10 pb-12 md:px-8 md:pt-20 md:pb-20 lg:grid-cols-12 lg:items-center lg:gap-12">
         <m.div className="relative z-10 lg:col-span-7" initial="hidden" animate="show" variants={staggerContainer(0.1, 0.05)}>
           <m.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-ocd-border bg-ocd-card/80 px-3 py-1 text-[11px] font-medium text-ocd-soft md:mb-6 md:py-1.5 md:text-xs">
@@ -35,15 +40,16 @@ export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLa
               {accountLabel}
             </ButtonLink>
           </m.div>
-          <m.div variants={fadeUp} className="mt-10 hidden items-center gap-4 sm:flex">
+          <m.div variants={fadeUp} className="mt-8 flex items-center gap-3 sm:mt-10 sm:gap-4">
             <div className="flex -space-x-3">
               {JOINED_AVATARS.map((src) => (
-                <Img key={src} src={src} alt="" className="h-10 w-10 rounded-full border-2 border-ocd-black object-cover" fallbackClassName="bg-ocd-card" />
+                <Img key={src} src={src} alt="" className="h-8 w-8 rounded-full border-2 border-ocd-black object-cover sm:h-10 sm:w-10" fallbackClassName="bg-ocd-card" />
               ))}
               <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ocd-black bg-ocd-orange text-xs font-bold text-ocd-black">+</div>
             </div>
-            <p className="text-sm text-ocd-muted">
-              Rejoint par des jeunes à <span className="font-medium text-ocd-cream">Cotonou, Lomé, Abidjan, Dakar</span>…
+            <p className="text-xs text-ocd-muted sm:text-sm">
+              <span className="font-medium text-ocd-cream">{LANDING_STATS[0]?.value} candidatures*</span>
+              <span className="hidden sm:inline"> · Cotonou, Lomé, Abidjan, Dakar…</span>
             </p>
           </m.div>
         </m.div>
@@ -65,7 +71,7 @@ export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLa
           <m.div
             className="absolute top-16 -left-6 hidden rounded-2xl px-4 py-3 shadow-card glass lg:block"
             animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 5, repeat: 3, ease: 'easeInOut' }}
           >
             <p className="font-display text-2xl font-semibold text-ocd-orange">+340</p>
             <p className="text-xs text-ocd-muted">projets accompagnés*</p>

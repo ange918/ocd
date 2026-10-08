@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 import { useAuth } from '@/app/providers/auth-context'
 import { Hero } from '@/components/landing/Hero'
-import { FinalCta, HowItWorks, Philosophy, Sectors, StatsBand, Testimonials, VideoBlock } from '@/components/landing/Sections'
+import { StickyCta } from '@/components/landing/StickyCta'
+import { Faq, FinalCta, HowItWorks, Philosophy, Sectors, StatsBand, Testimonials, VideoBlock } from '@/components/landing/Sections'
 
 /** Maquettes 01 (desktop 1440) + 02 (mobile 390) — une seule route responsive. */
 export default function LandingPage() {
@@ -28,7 +29,9 @@ export default function LandingPage() {
       <HowItWorks />
       <Sectors />
       <Testimonials />
+      <Faq />
       <FinalCta />
+      <StickyCta />
     </>
   )
 }

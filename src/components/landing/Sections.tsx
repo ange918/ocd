@@ -1,8 +1,11 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
+import { ChevronDown } from 'lucide-react'
 import { m } from 'framer-motion'
 import { ButtonLink, Card, Eyebrow, Icon, Img } from '@/components/ui'
 import { Reveal, RevealItem } from '@/components/ui/Reveal'
 import { useToast } from '@/app/providers/toast-context'
-import { HOW_STEPS, LANDING_SECTORS, LANDING_STATS, PHILOSOPHY_POINTS, TESTIMONIALS } from '@/data/landing'
+import { FAQ_ITEMS, HOW_STEPS, LANDING_SECTORS, LANDING_STATS, PHILOSOPHY_POINTS, TESTIMONIALS } from '@/data/landing'
 import { SECTOR_META } from '@/data/labels'
 import { IMG, unsplash } from '@/data/images'
 import { cn, toneText } from '@/lib/tones'
@@ -27,7 +30,7 @@ export function StatsBand() {
           </RevealItem>
         ))}
       </Reveal>
-      <p className="mx-auto max-w-6xl px-5 pb-6 text-[10px] text-ocd-muted/70 md:px-8 md:text-[11px]">
+      <p className="mx-auto max-w-6xl px-5 pb-6 text-[11px] text-ocd-muted/85 md:px-8">
         <span className="md:hidden">* Données d'exemple — maquette</span>
         <span className="hidden md:inline">* Chiffres d'exemple pour maquette — non représentatifs de données réelles.</span>
       </p>
@@ -104,7 +107,7 @@ export function VideoBlock() {
           <div className="relative flex flex-col items-center justify-center px-6 py-16 text-center md:px-8 md:py-28">
             <m.button
               type="button"
-              aria-label="Lire la vidéo du mouvement"
+              aria-label="Lire la vidéo du mouvement (bientôt disponible)"
               onClick={() => toast({ title: 'Vidéo bientôt disponible', description: 'Les reportages OCD arrivent très vite.', tone: 'info' })}
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.94 }}
@@ -113,7 +116,11 @@ export function VideoBlock() {
               <m.span aria-hidden className="absolute inset-0 rounded-full border-2 border-ocd-orange" animate={{ scale: [1, 1.5], opacity: [0.7, 0] }} transition={{ duration: 1.8, repeat: Infinity }} />
               <Icon.Play />
             </m.button>
-            <h3 id="video-title" className="mt-6 font-display text-2xl font-medium md:text-3xl">
+            <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-ocd-border bg-ocd-black/60 px-3 py-1 text-[11px] font-medium text-ocd-soft">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ocd-yellow" />
+              Bientôt disponible
+            </span>
+            <h3 id="video-title" className="mt-3 font-display text-2xl font-medium md:text-3xl">
               Regarde le mouvement en action
             </h3>
             <p className="mt-2 max-w-md text-sm text-ocd-muted md:text-base">Reportages, pitchs et coulisses des projets OCD — du marché de Dantokpa aux ateliers d'Abidjan.</p>
@@ -191,11 +198,16 @@ export function Sectors() {
           const s = SECTOR_META[key]
           return (
             <RevealItem as="li" key={key}>
-              <Card padding="none" interactive className="h-full p-4 md:p-6">
-                <s.icon className="size-6 text-ocd-orange" strokeWidth={1.75} aria-hidden />
-                <p className="mt-3 font-display font-medium md:mt-4">{s.label}</p>
-                <p className="mt-1 text-xs text-ocd-muted">{s.hint}</p>
-              </Card>
+              <Link to="/candidature" className="group block h-full rounded-2xl" aria-label={`${s.label} — ${s.hint}. Soumettre un projet`}>
+                <Card padding="none" interactive className="h-full p-4 md:p-6">
+                  <s.icon className="size-6 text-ocd-orange" strokeWidth={1.75} aria-hidden />
+                  <p className="mt-3 font-display font-medium md:mt-4">{s.label}</p>
+                  <p className="mt-1 text-xs text-ocd-muted">{s.hint}</p>
+                  <span aria-hidden className="mt-3 inline-block text-xs font-medium text-ocd-soft opacity-70 transition-all group-hover:translate-x-1 group-hover:opacity-100 md:opacity-0">
+                    Candidater →
+                  </span>
+                </Card>
+              </Link>
             </RevealItem>
           )
         })}
@@ -216,7 +228,31 @@ export function Sectors() {
   )
 }
 
+function useSnapIndex(count: number) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const onScroll = () => {
+      const first = el.children[0] as HTMLElement | undefined
+      if (!first) return
+      const step = first.offsetWidth + 16
+      setIndex(Math.min(count - 1, Math.max(0, Math.round(el.scrollLeft / step))))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [count])
+  const goTo = (i: number) => {
+    const el = ref.current
+    const child = el?.children[i] as HTMLElement | undefined
+    if (el && child) el.scrollTo({ left: child.offsetLeft - el.offsetLeft - 20, behavior: 'smooth' })
+  }
+  return { ref, index, goTo }
+}
+
 export function Testimonials() {
+  const { ref, index, goTo } = useSnapIndex(TESTIMONIALS.length)
   return (
     <section id="temoignages" aria-labelledby="temoignages-title" className="scroll-mt-16 md:border-t md:border-ocd-border md:bg-ocd-anthra md:py-24">
       <div className="mx-auto max-w-6xl px-5 pb-12 md:px-8 md:pb-0">
@@ -231,7 +267,7 @@ export function Testimonials() {
             <span className="sr-only md:hidden">Ils sont sortis. Voici ce qui a changé.</span>
           </RevealItem>
         </Reveal>
-        <Reveal as="ul" className="-mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 scrollbar-none md:mx-0 md:mt-12 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0" stagger={0.12}>
+        <Reveal as="ul" ref={ref} tabIndex={0} aria-label="Témoignages, faire défiler horizontalement" className="-mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 scrollbar-none md:mx-0 md:mt-12 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0" stagger={0.12}>
           {TESTIMONIALS.map((t) => (
             <RevealItem as="li" key={t.name} className="w-[85%] shrink-0 snap-start md:w-auto">
               <Card padding="none" interactive className="h-full rounded-2xl p-5 md:rounded-3xl md:p-7">
@@ -253,7 +289,44 @@ export function Testimonials() {
             </RevealItem>
           ))}
         </Reveal>
+        <div className="mt-4 flex justify-center gap-1 md:hidden" role="group" aria-label="Choisir un témoignage">
+          {TESTIMONIALS.map((t, i) => (
+            <button key={t.name} type="button" onClick={() => goTo(i)} aria-label={`Témoignage de ${t.name}`} aria-current={i === index} className="flex h-6 w-6 items-center justify-center">
+              <span className={cn('h-1.5 rounded-full transition-all duration-300', i === index ? 'w-5 bg-ocd-orange' : 'w-1.5 bg-ocd-border')} />
+            </button>
+          ))}
+        </div>
       </div>
+    </section>
+  )
+}
+
+export function Faq() {
+  return (
+    <section id="faq" aria-labelledby="faq-title" className="mx-auto max-w-3xl px-5 py-12 md:px-8 md:py-24">
+      <Reveal>
+        <RevealItem>
+          <Eyebrow>FAQ</Eyebrow>
+        </RevealItem>
+        <RevealItem as="h2">
+          <span id="faq-title" className="mt-2 block font-display text-2xl font-medium md:mt-3 md:text-4xl">
+            Tes questions, nos réponses
+          </span>
+        </RevealItem>
+        <ul className="mt-8 space-y-3">
+          {FAQ_ITEMS.map((f) => (
+            <RevealItem as="li" key={f.q}>
+              <details className="group rounded-2xl border border-ocd-border bg-ocd-card transition-colors open:border-ocd-orange/40 hover:border-ocd-muted/60">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-2xl px-5 py-3 font-medium marker:hidden [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <ChevronDown aria-hidden className="faq-chevron size-5 shrink-0 text-ocd-orange" />
+                </summary>
+                <p className="px-5 pb-5 text-sm leading-relaxed text-ocd-muted">{f.a}</p>
+              </details>
+            </RevealItem>
+          ))}
+        </ul>
+      </Reveal>
     </section>
   )
 }
@@ -278,6 +351,9 @@ export function FinalCta() {
               </ButtonLink>
               <a href="#philosophie" className="hidden rounded-full border border-ocd-black/20 bg-white/30 px-7 py-3.5 font-medium backdrop-blur transition-transform hover:scale-[1.02] md:inline-flex">
                 Découvrir le mouvement
+              </a>
+              <a href="#faq" className="inline-flex min-h-11 items-center px-2 text-sm font-medium underline underline-offset-4 md:px-4">
+                Une question ? Voir la FAQ
               </a>
             </div>
             <p className="mt-4 hidden text-xs opacity-60 md:block">* Délai d'exemple pour maquette.</p>

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { AnimatePresence, m } from 'framer-motion'
+import { AnimatePresence, m, useScroll, useSpring } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
 import { ButtonLink, LogoBaseline, LogoLockup, LogoMark } from '@/components/ui'
 import { useAuth } from '../providers/auth-context'
 import { AnimatedOutlet } from '../AnimatedOutlet'
@@ -10,7 +11,37 @@ const NAV = [
   { id: 'comment', label: 'Comment ça marche' },
   { id: 'secteurs', label: 'Secteurs' },
   { id: 'temoignages', label: 'Témoignages' },
+  { id: 'faq', label: 'FAQ' },
 ]
+
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = useState<string | null>(null)
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (pathname !== '/') return setActive(null)
+    const els = ids.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e)
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+      { rootMargin: '-45% 0px -50% 0px' },
+    )
+    els.forEach((el) => obs.observe(el))
+    const onTop = () => window.scrollY < 200 && setActive(null)
+    window.addEventListener('scroll', onTop, { passive: true })
+    return () => {
+      obs.disconnect()
+      window.removeEventListener('scroll', onTop)
+    }
+  }, [ids, pathname])
+  return active
+}
+
+const NAV_IDS = NAV.map((n) => n.id)
+
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 })
+  return <m.div aria-hidden style={{ scaleX }} className="absolute inset-x-0 bottom-[-1px] h-0.5 origin-left bg-ocd-grad" />
+}
 
 function useSectionNav() {
   const location = useLocation()
@@ -29,21 +60,28 @@ function Header() {
   const [open, setOpen] = useState(false)
   const { session } = useAuth()
   const goTo = useSectionNav()
+  const active = useActiveSection(NAV_IDS)
+  const headerRef = useRef<HTMLElement>(null)
   const location = useLocation()
 
   useEffect(() => setOpen(false), [location.pathname])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onDown = (e: PointerEvent) => !headerRef.current?.contains(e.target as Node) && setOpen(false)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('pointerdown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('pointerdown', onDown)
+    }
   }, [open])
 
   const accountTo = session ? (session.role === 'admin' ? '/admin' : '/espace') : '/connexion'
   const accountLabel = session ? 'Mon espace' : 'Se connecter'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-ocd-border/60 bg-ocd-black/80 backdrop-blur-xl">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-ocd-border/60 bg-ocd-black/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 md:h-16 md:px-8">
         <Link to="/" aria-label="OCD — accueil" className="flex items-center gap-3">
           <LogoMark className="h-7 md:h-8" title={null} />
@@ -58,9 +96,11 @@ function Header() {
                 e.preventDefault()
                 goTo(n.id)
               }}
-              className="transition-colors hover:text-ocd-cream"
+              aria-current={active === n.id ? 'location' : undefined}
+              className={`relative py-1 transition-colors hover:text-ocd-cream ${active === n.id ? 'text-ocd-cream' : ''}`}
             >
               {n.label}
+              {active === n.id && <m.span layoutId="nav-underline" aria-hidden className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-ocd-grad" />}
             </a>
           ))}
         </nav>
@@ -77,11 +117,13 @@ function Header() {
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls="menu-mobile"
-          className="text-sm font-medium text-ocd-muted md:hidden"
+          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+          className="-mr-2 flex size-11 items-center justify-center rounded-full text-ocd-cream md:hidden"
         >
-          {open ? 'Fermer' : 'Menu'}
+          {open ? <X aria-hidden className="size-6" /> : <Menu aria-hidden className="size-6" />}
         </button>
       </div>
+      <ScrollProgress />
       <AnimatePresence>
         {open && (
           <m.nav
@@ -103,7 +145,8 @@ function Header() {
                       setOpen(false)
                       goTo(n.id)
                     }}
-                    className="block rounded-xl px-3 py-2.5 text-[15px] text-ocd-cream hover:bg-ocd-card"
+                    aria-current={active === n.id ? 'location' : undefined}
+                    className={`block rounded-xl px-3 py-3 text-[15px] hover:bg-ocd-card ${active === n.id ? 'bg-ocd-card text-ocd-soft' : 'text-ocd-cream'}`}
                   >
                     {n.label}
                   </a>
@@ -151,7 +194,11 @@ function Footer() {
                 Comment ça marche
               </a>
             </li>
-            <li>FAQ</li>
+            <li>
+              <a className="hover:text-ocd-soft" href={`${import.meta.env.BASE_URL}#faq`}>
+                FAQ
+              </a>
+            </li>
           </ul>
         </div>
         <div>

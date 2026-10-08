@@ -60,6 +60,12 @@
   font-weight: 700;
   font-size: 10px;
 }
+@utility faq-chevron {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  details[open] > summary & {
+    transform: rotate(180deg);
+  }
+}
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -70,6 +76,7 @@
 /* ───────────── Base ───────────── */
 @layer base {
   html {
+    scroll-padding-top: 4.5rem;
     color-scheme: dark;
     -webkit-tap-highlight-color: transparent;
   }
