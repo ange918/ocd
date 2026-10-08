@@ -9,6 +9,7 @@ import RouteError from '@/pages/RouteError'
 /* Découpage par route (React.lazy) : chaque écran est un chunk séparé. */
 const LandingPage = lazy(() => import('@/pages/public/LandingPage'))
 const NotFoundPage = lazy(() => import('@/pages/public/NotFoundPage'))
+const LegalPage = lazy(() => import('@/pages/public/LegalPage'))
 const PhoneLoginPage = lazy(() => import('@/pages/auth/PhoneLoginPage'))
 const OtpPage = lazy(() => import('@/pages/auth/OtpPage'))
 const CandidaturePage = lazy(() => import('@/pages/candidature/CandidaturePage'))
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
         element: <PublicLayout />,
         children: [
           { index: true, element: <LandingPage /> }, // 01 + 02
+          { path: ':slug', element: <LegalPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

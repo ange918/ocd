@@ -4,24 +4,32 @@ import { ButtonLink } from '@/components/ui'
 
 /** CTA collant mobile : visible une fois le hero passé, masqué devant le CTA final. */
 export function StickyCta() {
-  const [pastHero, setPastHero] = useState(false)
-  const [atEnd, setAtEnd] = useState(false)
+  const [show, setShow] = useState(false)
 
   useEffect(() => {
     const hero = document.getElementById('hero-title')
     const end = document.getElementById('cta-title')
     if (!hero || !end) return
-    const heroObs = new IntersectionObserver(([e]) => e && setPastHero(!e.isIntersecting && e.boundingClientRect.top < 0))
-    const endObs = new IntersectionObserver(([e]) => e && setAtEnd(e.isIntersecting || e.boundingClientRect.top < 0), { rootMargin: '0px 0px 25% 0px' })
-    heroObs.observe(hero)
-    endObs.observe(end)
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const pastHero = hero.getBoundingClientRect().bottom < 0
+      const atEnd = end.getBoundingClientRect().top < window.innerHeight * 0.75
+      setShow(pastHero && !atEnd)
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
     return () => {
-      heroObs.disconnect()
-      endObs.disconnect()
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [])
 
-  const show = pastHero && !atEnd
   return (
     <AnimatePresence>
       {show && (
