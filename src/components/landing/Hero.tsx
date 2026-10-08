@@ -1,7 +1,7 @@
 import { m } from 'framer-motion'
 import { ButtonLink, Img } from '@/components/ui'
 import { IMG, unsplash } from '@/data/images'
-import { JOINED_AVATARS } from '@/data/landing'
+import { JOINED_AVATARS, LANDING_STATS } from '@/data/landing'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 
 export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLabel: string }) {
@@ -35,15 +35,16 @@ export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLa
               {accountLabel}
             </ButtonLink>
           </m.div>
-          <m.div variants={fadeUp} className="mt-10 hidden items-center gap-4 sm:flex">
+          <m.div variants={fadeUp} className="mt-8 flex items-center gap-3 sm:mt-10 sm:gap-4">
             <div className="flex -space-x-3">
               {JOINED_AVATARS.map((src) => (
-                <Img key={src} src={src} alt="" className="h-10 w-10 rounded-full border-2 border-ocd-black object-cover" fallbackClassName="bg-ocd-card" />
+                <Img key={src} src={src} alt="" className="h-8 w-8 rounded-full border-2 border-ocd-black object-cover sm:h-10 sm:w-10" fallbackClassName="bg-ocd-card" />
               ))}
               <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ocd-black bg-ocd-orange text-xs font-bold text-ocd-black">+</div>
             </div>
-            <p className="text-sm text-ocd-muted">
-              Rejoint par des jeunes à <span className="font-medium text-ocd-cream">Cotonou, Lomé, Abidjan, Dakar</span>…
+            <p className="text-xs text-ocd-muted sm:text-sm">
+              <span className="font-medium text-ocd-cream">{LANDING_STATS[0]?.value} candidatures*</span>
+              <span className="hidden sm:inline"> · Cotonou, Lomé, Abidjan, Dakar…</span>
             </p>
           </m.div>
         </m.div>
@@ -65,7 +66,7 @@ export function Hero({ accountTo, accountLabel }: { accountTo: string; accountLa
           <m.div
             className="absolute top-16 -left-6 hidden rounded-2xl px-4 py-3 shadow-card glass lg:block"
             animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 5, repeat: 3, ease: 'easeInOut' }}
           >
             <p className="font-display text-2xl font-semibold text-ocd-orange">+340</p>
             <p className="text-xs text-ocd-muted">projets accompagnés*</p>

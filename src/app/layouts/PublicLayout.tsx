@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { AnimatePresence, m } from 'framer-motion'
-import { ButtonLink, LogoBaseline, LogoLockup, LogoMark } from '@/components/ui'
+import { AnimatePresence, m, useScroll, useSpring } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
+import { ButtonLink, LogoBaseline, LogoMark } from '@/components/ui'
+import { LEGAL_ENTITY, LEGAL_LINKS } from '@/data/legal'
 import { useAuth } from '../providers/auth-context'
 import { AnimatedOutlet } from '../AnimatedOutlet'
 
@@ -10,7 +12,37 @@ const NAV = [
   { id: 'comment', label: 'Comment ça marche' },
   { id: 'secteurs', label: 'Secteurs' },
   { id: 'temoignages', label: 'Témoignages' },
+  { id: 'faq', label: 'FAQ' },
 ]
+
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = useState<string | null>(null)
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (pathname !== '/') return setActive(null)
+    const els = ids.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e)
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+      { rootMargin: '-45% 0px -50% 0px' },
+    )
+    els.forEach((el) => obs.observe(el))
+    const onTop = () => window.scrollY < 200 && setActive(null)
+    window.addEventListener('scroll', onTop, { passive: true })
+    return () => {
+      obs.disconnect()
+      window.removeEventListener('scroll', onTop)
+    }
+  }, [ids, pathname])
+  return active
+}
+
+const NAV_IDS = NAV.map((n) => n.id)
+
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 })
+  return <m.div aria-hidden style={{ scaleX }} className="absolute inset-x-0 bottom-[-1px] h-0.5 origin-left bg-ocd-grad" />
+}
 
 function useSectionNav() {
   const location = useLocation()
@@ -29,24 +61,31 @@ function Header() {
   const [open, setOpen] = useState(false)
   const { session } = useAuth()
   const goTo = useSectionNav()
+  const active = useActiveSection(NAV_IDS)
+  const headerRef = useRef<HTMLElement>(null)
   const location = useLocation()
 
   useEffect(() => setOpen(false), [location.pathname])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onDown = (e: PointerEvent) => !headerRef.current?.contains(e.target as Node) && setOpen(false)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('pointerdown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('pointerdown', onDown)
+    }
   }, [open])
 
   const accountTo = session ? (session.role === 'admin' ? '/admin' : '/espace') : '/connexion'
   const accountLabel = session ? 'Mon espace' : 'Se connecter'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-ocd-border/60 bg-ocd-black/80 backdrop-blur-xl">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-ocd-border/60 bg-ocd-black/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 md:h-16 md:px-8">
         <Link to="/" aria-label="OCD — accueil" className="flex items-center gap-3">
-          <LogoMark className="h-7 md:h-8" title={null} />
+          <LogoMark className="h-8 md:h-9" title={null} />
           <LogoBaseline className="hidden sm:block" />
         </Link>
         <nav aria-label="Sections" className="hidden items-center gap-8 text-sm text-ocd-muted md:flex">
@@ -58,9 +97,11 @@ function Header() {
                 e.preventDefault()
                 goTo(n.id)
               }}
-              className="transition-colors hover:text-ocd-cream"
+              aria-current={active === n.id ? 'location' : undefined}
+              className={`relative py-1 transition-colors hover:text-ocd-cream ${active === n.id ? 'text-ocd-cream' : ''}`}
             >
               {n.label}
+              {active === n.id && <m.span layoutId="nav-underline" aria-hidden className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-ocd-grad" />}
             </a>
           ))}
         </nav>
@@ -77,11 +118,13 @@ function Header() {
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls="menu-mobile"
-          className="text-sm font-medium text-ocd-muted md:hidden"
+          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+          className="-mr-2 flex size-11 items-center justify-center rounded-full text-ocd-cream md:hidden"
         >
-          {open ? 'Fermer' : 'Menu'}
+          {open ? <X aria-hidden className="size-6" /> : <Menu aria-hidden className="size-6" />}
         </button>
       </div>
+      <ScrollProgress />
       <AnimatePresence>
         {open && (
           <m.nav
@@ -103,7 +146,8 @@ function Header() {
                       setOpen(false)
                       goTo(n.id)
                     }}
-                    className="block rounded-xl px-3 py-2.5 text-[15px] text-ocd-cream hover:bg-ocd-card"
+                    aria-current={active === n.id ? 'location' : undefined}
+                    className={`block rounded-xl px-3 py-3 text-[15px] hover:bg-ocd-card ${active === n.id ? 'bg-ocd-card text-ocd-soft' : 'text-ocd-cream'}`}
                   >
                     {n.label}
                   </a>
@@ -126,49 +170,73 @@ function Header() {
 }
 
 function Footer() {
+  const year = new Date().getFullYear()
   return (
-    <footer className="border-t border-ocd-border md:bg-ocd-anthra">
-      <div className="mx-auto hidden max-w-6xl gap-10 px-8 py-14 md:grid md:grid-cols-4">
-        <div className="md:col-span-2">
-          <LogoLockup />
-          <p className="mt-4 max-w-sm text-sm text-ocd-muted">Mouvement pour la jeunesse africaine qui entreprend. Porté par Bovann. Basé en Afrique de l'Ouest.</p>
+    <footer className="border-t border-ocd-border bg-ocd-anthra" aria-label="Pied de page">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 md:grid-cols-12 md:px-8 md:py-16">
+        <div className="md:col-span-5">
+          <Link to="/" aria-label="OCD — accueil" className="inline-block">
+            <LogoMark className="h-12" title="OCD" />
+          </Link>
+          <p className="mt-4 text-sm font-semibold tracking-[0.28em] text-ocd-cream/90 uppercase">Les opportunités</p>
+          <p className="mt-1 text-xs font-bold tracking-[0.28em] text-ocd-orange uppercase">— C'est dehors —</p>
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-ocd-muted">Mouvement pour la jeunesse africaine qui entreprend. Porté par Bovann. Basé en Afrique de l'Ouest.</p>
         </div>
-        <div>
+        <nav aria-label="Plateforme" className="md:col-span-2">
           <p className="text-xs font-bold tracking-wider text-ocd-muted uppercase">Plateforme</p>
-          <ul className="mt-4 space-y-2 text-sm">
+          <ul className="mt-4 space-y-1 text-sm">
+            {[
+              { to: '/candidature', label: 'Soumettre un projet' },
+              { to: '/connexion', label: 'Se connecter' },
+              { to: '/#comment', label: 'Comment ça marche' },
+              { to: '/#faq', label: 'FAQ' },
+            ].map((l) => (
+              <li key={l.to}>
+                <Link className="inline-flex min-h-11 items-center hover:text-ocd-soft md:min-h-8" to={l.to}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Informations légales" className="md:col-span-2">
+          <p className="text-xs font-bold tracking-wider text-ocd-muted uppercase">Légal</p>
+          <ul className="mt-4 space-y-1 text-sm">
+            {LEGAL_LINKS.map((l) => (
+              <li key={l.slug}>
+                <Link className="inline-flex min-h-11 items-center hover:text-ocd-soft md:min-h-8" to={`/${l.slug}`}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="md:col-span-3">
+          <p className="text-xs font-bold tracking-wider text-ocd-muted uppercase">Contact</p>
+          <ul className="mt-4 space-y-1 text-sm">
             <li>
-              <Link className="hover:text-ocd-soft" to="/candidature">
-                Soumettre un projet
-              </Link>
-            </li>
-            <li>
-              <Link className="hover:text-ocd-soft" to="/connexion">
-                Se connecter
-              </Link>
-            </li>
-            <li>
-              <a className="hover:text-ocd-soft" href={`${import.meta.env.BASE_URL}#comment`}>
-                Comment ça marche
+              <a className="inline-flex min-h-11 items-center hover:text-ocd-soft md:min-h-8" href={`mailto:${LEGAL_ENTITY.email}`}>
+                {LEGAL_ENTITY.email}
               </a>
             </li>
-            <li>FAQ</li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-xs font-bold tracking-wider text-ocd-muted uppercase">Contact</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li>hello@ocd-app.example</li>
-            <li>WhatsApp · +229 ··· ··· ···</li>
-            <li>Cotonou · Abidjan · Dakar</li>
+            <li className="flex min-h-8 items-center text-ocd-muted">WhatsApp · {LEGAL_ENTITY.whatsapp}</li>
+            <li className="flex min-h-8 items-center text-ocd-muted">Cotonou · Abidjan · Dakar</li>
           </ul>
         </div>
       </div>
-      <div className="md:border-t md:border-ocd-border">
-        <div className="mx-auto hidden max-w-6xl flex-wrap items-center justify-between gap-4 px-8 py-6 text-xs text-ocd-muted md:flex">
-          <p>© 2026 OCD · Maquette UI — contenu &amp; stats d'exemple</p>
-          <p>Confidentialité · Conditions · Mentions légales</p>
+      <div className="border-t border-ocd-border">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 text-xs text-ocd-muted md:flex-row md:items-center md:justify-between md:px-8">
+          <p>© {year} OCD — Les Opportunités, C'est Dehors. Tous droits réservés.</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1">
+            {LEGAL_LINKS.map((l) => (
+              <li key={l.slug}>
+                <Link className="hover:text-ocd-cream" to={`/${l.slug}`}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-        <p className="px-5 py-8 text-center text-[11px] text-ocd-muted md:hidden">© 2026 OCD · Maquette — stats d'exemple</p>
       </div>
     </footer>
   )
